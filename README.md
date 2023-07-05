@@ -1,8 +1,9 @@
-# A Toolkit for Lesions Segmentation in Fundus
-
 <p align="center">
     <img src="imgs/mosaic.png" width="256px"/>
 </p>
+
+
+# A Toolkit for Lesions Segmentation in Fundus
 
 This library offers a set of models (with pretrained weights) for the segmentation of lesions in fundus images.
 As of now, four lesions are segmented
