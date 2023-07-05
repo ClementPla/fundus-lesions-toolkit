@@ -1,4 +1,4 @@
-# Lesions Segmentation in Fundus Toolkit
+# A Toolkit for Lesions Segmentation in Fundus
 
 <p align="center">
     <img src="imgs/mosaic.png"/>
