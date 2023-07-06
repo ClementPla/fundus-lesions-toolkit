@@ -6,7 +6,7 @@ import torchvision.transforms.functional as Ftv
 import os
 from typing import Literal, Union
 from .checkpoints import DOWNLOADABLE_MODELS, MODELS_TRAINED_WITH_DROPOUT
-from utils.images import autofit_fundus_resolution, reverse_autofit_tensor
+from ..utils.images import autofit_fundus_resolution, reverse_autofit_tensor
 import warnings
 
 Architecture = Literal["unet"]

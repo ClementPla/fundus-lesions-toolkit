@@ -8,7 +8,7 @@ setup(
   author = 'Clement Playout',                   
   author_email = 'clement.playout@polymtl.ca', 
   url = 'https://github.com/ClementPla/fundus-lesions-toolkit/tree/main',   
-  download_url = 'https://github.com/ClementPla/fundus-lesions-toolkit/archive/refs/tags/v_0.1.0.tar.gz',   
+  download_url = 'https://github.com/ClementPla/fundus-lesions-toolkit/archive/refs/tags/v0.1.0.tar.gz',   
   keywords = ['Segmentation', 'Fundus', 
               'CNN', 'Neural Networks',
               'PyTorch', 'Models', 
