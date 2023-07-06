@@ -1,11 +1,14 @@
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms.functional as Ftv
 import os
 from typing import Literal, Union
-from .checkpoints import downloadable_models
+from .checkpoints import DOWNLOADABLE_MODELS, MODELS_TRAINED_WITH_DROPOUT
 from utils.images import autofit_fundus_resolution, reverse_autofit_tensor
+import warnings
+
 Architecture = Literal["unet"]
 EncoderModel = Literal["resnet34"]
 TrainedOn = Literal["ALL"]
@@ -123,15 +126,29 @@ def segmentation_model(arch:Architecture, encoder:EncoderModel, weights:TrainedO
     arch = arch.lower()
     weights = weights.lower()
     encoder = encoder.lower()
-    
-    assert (arch, encoder, weights) in downloadable_models.keys(), f"Wrong combinations of architecture, encoder and weights asked {(arch, encoder, weights)}. Call list_models() to see all configurations acceptable"
+    model_key = (arch, encoder, weights)
+    assert model_key in DOWNLOADABLE_MODELS.keys(), f"Wrong combinations of architecture, encoder and weights asked {(arch, encoder, weights)}. Call list_models() to see all configurations acceptable"
+
     import segmentation_models_pytorch as smp
     model = smp.create_model(arch=arch, encoder_name=encoder, encoder_weights=None, in_channels=3, classes=5)
     
-    url = downloadable_models[(arch, encoder, weights)]
+    url = DOWNLOADABLE_MODELS[model_key]
     model_name = f'{arch}_{encoder}_{weights}.ckpt'
     model_dir = os.path.join(torch.hub.get_dir(), 'checkpoints/fundus_segmentation_toolkit/segmentation')
     state_dict = torch.hub.load_state_dict_from_url(url, map_location='cpu', file_name=model_name, model_dir=model_dir)
     
     model.load_state_dict(state_dict=state_dict, strict=True)
+    if model_key in MODELS_TRAINED_WITH_DROPOUT:
+        model = set_dropout(model, initial_value=0.2)
+    return model
+
+def set_dropout(model, initial_value=0.0):
+    warnings.warn(f"Setting dropout to {initial_value}")
+    for k, v in list(model.named_modules()):
+        if 'drop' in k.split('.'):
+            parent_model = model
+            for model_name in k.split('.')[:-1]:
+                parent_model = getattr(parent_model, model_name)
+            setattr(parent_model, 'drop', nn.Dropout2d(p=initial_value))
+
     return model

@@ -1,4 +1,4 @@
-from .checkpoints import downloadable_models
+from .checkpoints import DOWNLOADABLE_MODELS
 
 def list_models():
-    return list(downloadable_models.keys())
+    return list(DOWNLOADABLE_MODELS.keys())
