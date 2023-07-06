@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
-
+import torch.nn.functional as F
 def autofit_fundus_resolution(fundus, max_size, return_roi=False):
     """
     This function does all the necessary operations to fit a fundus image into a square shape, including automatic removal of black borders 
@@ -50,6 +49,27 @@ def reverse_autofit(image, **forward_params):
     
     pad = forward_params['pad']
     return pad_given_margins(image, pad)
+
+def reverse_autofit_tensor(tensor, **forward_params):
+    """
+    Same function as reverse_autofit but for tensor (typically prediction)
+
+    Args:
+        tensor (torch.Tensor): CxHxW (different than reverse_autofit)
+
+    Returns:
+        torch.Tensor: CxH_newxW_new
+    """
+    crop = forward_params['crop']
+    tensor = tensor[:, crop[0]: crop[1], crop[2]:crop[3]]
+    f = forward_params['resize']
+    tensor = F.interpolate(tensor.unsqueeze(0), scale_factor=f).squeeze(0)
+
+    pad = forward_params['pad']
+    tensor = F.pad(tensor, pad=pad[::-1])
+    return tensor
+
+
     
 def autocrop_fundus(fundus):
     """
@@ -96,10 +116,3 @@ def open_image(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-def plot_image(image, figsize=(10, 10), axis='off', title=None):
-    plt.imshow(image)
-    plt.gcf().set_size_inches(figsize)
-    plt.axis(axis)
-    if title:
-        plt.title(title)
-    plt.show()
