@@ -14,3 +14,9 @@ As of now, four lesions are segmented
     4. Microaneurysms
 
     
+
+## Installation
+
+```bash
+pip install 
+```

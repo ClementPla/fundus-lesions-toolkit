@@ -8,10 +8,10 @@ setup(
   author = 'Clement Playout',                   # Type in your name
   author_email = 'clement.playout@polymtl.ca',      # Type in your E-Mail
   url = 'https://github.com/ClementPla/fundus-lesions-toolkit/tree/main',   # Provide either the link to your github or to your website
-  download_url = 'https://github.com/ClementPla/fundus-lesions-toolkit/archive/refs/tags/v_01.tar.gz',    # I explain this later on
+  download_url = 'https://github.com/ClementPla/fundus-lesions-toolkit/archive/refs/tags/V_011.tar.gz',    # I explain this later on
   keywords = ['Segmentation', 'Fundus', 'Pytorch', 'Models', 'Semantic', 'Lesions'],   # Keywords that define your package best
   install_requires=[            
-          'pytorch',
+          'torch',
           'nntools',
           'torchvision',
           'opencv-python',
