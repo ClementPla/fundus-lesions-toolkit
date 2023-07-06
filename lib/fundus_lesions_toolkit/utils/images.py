@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import torch.nn.functional as F
+
 def autofit_fundus_resolution(fundus, max_size, return_roi=False):
     """
     This function does all the necessary operations to fit a fundus image into a square shape, including automatic removal of black borders 
