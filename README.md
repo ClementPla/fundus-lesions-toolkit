@@ -20,3 +20,14 @@ As of now, four lesions are segmented
 ```bash
 pip install fundus_lesions_toolkit
 ```
+
+## Basic use case
+
+Check the [notebooks](notebooks/) for detailed examples.
+
+```python
+import cv2
+from fundus_lesions_toolkit.models import segment
+img = cv.imread(img_path)
+lesion = segment(img)
+```
