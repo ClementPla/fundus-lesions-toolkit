@@ -34,7 +34,7 @@ from fundus_lesions_toolkit.utils.visualization import plot_image_and_mask
 img = open_image(img_path)
 pred = segment(img, device='cpu', weights='ALL')
 plot_image_and_mask(img, pred, alpha=0.8, title='My segmentation', colors=DEFAULT_COLORS, labels=LESIONS)
-
+```
 
 ## Models available
 
