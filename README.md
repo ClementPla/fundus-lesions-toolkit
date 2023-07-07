@@ -19,6 +19,23 @@ As of now, four lesions are segmented
 pip install fundus_lesions_toolkit
 ```
 
+
+
+## Basic use
+
+Check the [notebooks](notebooks/) for detailed examples.
+
+```python
+from fundus_lesions_toolkit.models import segment
+from fundus_lesions_toolkit.constants import DEFAULT_COLORS, LESIONS
+from fundus_lesions_toolkit.utils.images import open_image
+from fundus_lesions_toolkit.utils.visualization import plot_image_and_mask
+
+img = open_image(img_path)
+pred = segment(img, device='cpu', weights='ALL')
+plot_image_and_mask(img, pred, alpha=0.8, title='My segmentation', colors=DEFAULT_COLORS, labels=LESIONS)
+
+
 ## Models available
 
 Currently, only a single model is made available (`unet` with a `timm-resnest50 encoder`). More will come regularly.
@@ -35,18 +52,3 @@ Models are trained with different publicly available datasets:
 It also includes models trained with all the data combined.
 
 
-
-
-## Basic use
-
-Check the [notebooks](notebooks/) for detailed examples.
-
-```python
-from fundus_lesions_toolkit.models import segment
-from fundus_lesions_toolkit.constants import DEFAULT_COLORS, LESIONS
-from fundus_lesions_toolkit.utils.images import open_image
-from fundus_lesions_toolkit.utils.visualization import plot_image_and_mask
-
-img = open_image(img_path)
-pred = segment(img, device='cpu', weights='ALL')
-plot_image_and_mask(img, pred, alpha=0.8, title='My segmentation', colors=DEFAULT_COLORS, labels=LESIONS)
