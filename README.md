@@ -13,10 +13,15 @@ As of now, four lesions are segmented
     3. Hemmorrhages
     4. Microaneurysms
 
+## Installation
+
+```bash
+pip install fundus_lesions_toolkit
+```
 
 ## Models available
 
-Currently, only a single model is made available (unet with a timm-resnest50 encoder). More will come regularly.
+Currently, only a single model is made available (`unet` with a `timm-resnest50 encoder`). More will come regularly.
 
 ## Variants
 
@@ -29,11 +34,7 @@ Models are trained with different publicly available datasets:
 
 It also includes models trained with all the data combined.
 
-## Installation
 
-```bash
-pip install fundus_lesions_toolkit
-```
 
 
 ## Basic use
