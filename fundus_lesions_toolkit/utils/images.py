@@ -26,7 +26,7 @@ def autofit_fundus_resolution(fundus, max_size, return_roi=False):
         'crop':(padh[0], padh[0]+h, padw[0], padw[0]+w)
     }
     if return_roi:
-        roi = cv2.resize(image, fx=f, fy=f, dsize=None)
+        roi = cv2.resize(roi, fx=f, fy=f, dsize=None)
         return np.pad(image, (padh, padw, (0,0))), np.pad(roi, (padh, padw)), reverse_params
         
     return np.pad(image, (padh, padw, (0,0))), reverse_params
