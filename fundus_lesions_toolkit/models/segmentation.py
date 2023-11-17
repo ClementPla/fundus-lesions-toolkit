@@ -28,7 +28,7 @@ def segment(image:np.ndarray, arch: Architecture='unet',
             return_features = False,
             return_decoder_features = False,
             features_layer = 3,
-            device: torch.device="cuda"):
+            device: torch.device="cuda", compile:bool=False):
     """Segment fundus image into 5 classes: background, CTW, EX, HE, MA
 
     Args:
@@ -47,7 +47,7 @@ def segment(image:np.ndarray, arch: Architecture='unet',
     Returns:
         torch.Tensor: 5 channel tensor with probabilities of each class (size 5xHxW)
     """
-    model = get_model(arch, encoder, weights, device)
+    model = get_model(arch, encoder, weights, device, compile=compile)
     model.eval()
 
     if autofit_resolution:
@@ -90,7 +90,8 @@ def batch_segment(batch:Union[torch.Tensor, np.ndarray], arch: Architecture='une
                   mean = None, std=None,
                   return_features = False,
                   features_layer = 3,
-                  device: torch.device="cuda"):
+                  device: torch.device="cuda", 
+                  compile:bool=False):
     """Segment batch of fundus images into 5 classes: background, CTW, EX, HE, MA
 
     Args:
@@ -109,7 +110,7 @@ def batch_segment(batch:Union[torch.Tensor, np.ndarray], arch: Architecture='une
         torch.Tensor: 5 channel tensor with probabilities of each class (size Bx5xHxW)
     """
     
-    model = get_model(arch, encoder, weights, device)
+    model = get_model(arch, encoder, weights, device, compile=compile)
     model.eval()
     
     # Check if batch is torch.Tensor or np.ndarray. If np.ndarray, convert to torch.Tensor
@@ -144,7 +145,7 @@ def batch_segment(batch:Union[torch.Tensor, np.ndarray], arch: Architecture='une
 
     
     
-def get_model(arch:Architecture='unet', encoder:EncoderModel='timm-resnest50d', weights:TrainedOn='All', device: torch.device="cuda"):
+def get_model(arch:Architecture='unet', encoder:EncoderModel='timm-resnest50d', weights:TrainedOn='All', device: torch.device="cuda", compile:bool=False):
     """Get segmentation model
 
     Args:
@@ -162,6 +163,10 @@ def get_model(arch:Architecture='unet', encoder:EncoderModel='timm-resnest50d', 
         model = _last_model[1]
     else:
         model = segmentation_model(arch=arch, encoder=encoder, weights=weights).to(device=device)
+        if compile:
+            model.eval()
+            with torch.inference_mode():
+                model = torch.compile(model)
         _last_model = ((arch, encoder, weights), model)
     return model
     
