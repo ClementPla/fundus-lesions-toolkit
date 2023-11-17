@@ -17,8 +17,8 @@ def autofit_fundus_resolution(fundus, max_size, return_roi=False):
     f = max_size / max((h, w))
     image = cv2.resize(image, fx=f, fy=f, dsize=None)
     h, w = image.shape[:-1]
-    padh = (max_size-h)//2, (max_size-h)//2 + ((max_size-h)%2 == 1) 
-    padw = (max_size-w)//2, ((max_size-w)%2 == 1) 
+    padh = (max_size-h)//2, (max_size-h)//2 + ((max_size-h)%2) 
+    padw = (max_size-w)//2, (max_size-w)//2 + ((max_size-w)%2) 
     
     reverse_params = {
         'pad':margins,
