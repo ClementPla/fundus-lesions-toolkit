@@ -63,7 +63,7 @@ def segment(image:np.ndarray, arch: Architecture='unet',
     tensor = Ftv.normalize(tensor, mean = DEFAULT_NORMALIZATION_MEAN, std=DEFAULT_NORMALIZATION_STD)
     with torch.inference_mode():
         features = model.encoder(tensor)
-        pre_segmentation_features = model.decoder(features)
+        pre_segmentation_features = model.decoder(*features)
         pred = model.segmentation_head(pre_segmentation_features)
         pred = F.softmax(pred, 1)
         if return_features or return_decoder_features:
