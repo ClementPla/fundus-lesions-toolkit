@@ -21,3 +21,6 @@ names2labels = {k:lesions2labels[v] for k,v in names2lesions.items()}
 labels2names = {v:k for k,v in names2labels.items()}
 
 lesions2colors = {l:c for l,c in zip(LESIONS, DEFAULT_COLORS)}
+
+DEFAULT_NORMALIZATION_MEAN = (0.485, 0.456, 0.406)
+DEFAULT_NORMALIZATION_STD = (0.229, 0.224, 0.225)

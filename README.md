@@ -3,10 +3,10 @@
 </p>
 
 
-# Toolkit for Lesions Segmentation in Fundus Images
+# Lesions Segmentation Toolkit for Fundus Images
 
 This library offers a set of models (with pretrained weights) for the segmentation of lesions in fundus images.
-As of now, four lesions are segmented
+As of now, four lesions are segmented:
 
     1. Cotton Wool Spot
     2. Exudates
@@ -52,3 +52,6 @@ Models are trained with different publicly available datasets:
 It also includes models trained with all the data combined.
 
 
+## Training
+
+This library is only a hub to access pure PyTorch trained models. 

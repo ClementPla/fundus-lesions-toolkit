@@ -7,6 +7,7 @@ import os
 from typing import Literal, Union
 from .checkpoints import DOWNLOADABLE_MODELS, MODELS_TRAINED_WITH_DROPOUT
 from ..utils.images import autofit_fundus_resolution, reverse_autofit_tensor
+from ..constants import DEFAULT_NORMALIZATION_MEAN, DEFAULT_NORMALIZATION_STD
 import warnings
 
 Architecture = Literal["unet"]
@@ -22,6 +23,11 @@ def segment(image:np.ndarray, arch: Architecture='unet',
             weights:TrainedOn='All',
             image_resolution = 1536,
             autofit_resolution = True,
+            reverse_autofit = True,
+            mean = None, std=None,
+            return_features = False,
+            return_decoder_features = False,
+            features_layer = 3,
             device: torch.device="cuda"):
     """Segment fundus image into 5 classes: background, CTW, EX, HE, MA
 
@@ -31,24 +37,46 @@ def segment(image:np.ndarray, arch: Architecture='unet',
         encoder (EncoderModel, optional): Defaults to 'timm-resnest50d'.
         weights (TrainedOn, optional):  Defaults to 'All'.
         image_resolution (int, optional): Defaults to 1536.
+        mean (list, optional): Defaults to constants.DEFAULT_NORMALIZATION_MEAN.
+        std (list, optional): Defaults to constants.DEFAULT_NORMALIZATION_STD.
         autofit_resolution (bool, optional):  Defaults to True.
+        return_features (bool, optional): Defaults to False. If True, returns also the features map of the i-th encoder layer. See features_layer.
+        features_layer (int, optional): Defaults to 3. If return_features is True, returns the features map of the i-th encoder layer.
         device (torch.device, optional): Defaults to "cuda".
 
     Returns:
         torch.Tensor: 5 channel tensor with probabilities of each class (size 5xHxW)
     """
     model = get_model(arch, encoder, weights, device)
-    if autofit_resolution:
-        image, transforms = autofit_fundus_resolution(image, image_resolution)
-    image = (image/255.).astype(np.float32)
     model.eval()
-    tensor = torch.from_numpy(image).permute((2,0,1)).unsqueeze(0).to(device)
-    tensor = Ftv.normalize(tensor, mean = [0.485, 0.456, 0.406], std=(0.229, 0.224, 0.225))
-    with torch.inference_mode():
-        pred = F.softmax(model(tensor), 1)
-        
-    pred = pred.squeeze(0)
+
     if autofit_resolution:
+        image, roi, transforms = autofit_fundus_resolution(image, image_resolution, return_roi=True)
+    
+    image = (image/255.).astype(np.float32)
+    tensor = torch.from_numpy(image).permute((2,0,1)).unsqueeze(0).to(device)
+    
+    if mean is None:
+        mean = DEFAULT_NORMALIZATION_MEAN
+    if std is None:
+        std = DEFAULT_NORMALIZATION_STD
+    tensor = Ftv.normalize(tensor, mean = DEFAULT_NORMALIZATION_MEAN, std=DEFAULT_NORMALIZATION_STD)
+    with torch.inference_mode():
+        features = model.encoder(tensor)
+        pre_segmentation_features = model.decoder(features)
+        pred = model.segmentation_head(pre_segmentation_features)
+        pred = F.softmax(pred, 1)
+        if return_features or return_decoder_features:
+            assert not reverse_autofit, "reverse_autofit is not compatible with return_features or return_decoder_features"
+            out = [pred]
+            if return_features:
+                out.append(features[features_layer])
+            if return_decoder_features:
+                out.append(pre_segmentation_features)
+            return tuple(out)
+                                
+    pred = pred.squeeze(0)
+    if reverse_autofit and autofit_resolution:
         pred = reverse_autofit_tensor(pred, **transforms)
         all_zeros = ~torch.any(pred, dim=0) # Find all zeros probabilities 
         pred[0, all_zeros] = 1 # Assign them to background
@@ -59,6 +87,9 @@ def segment(image:np.ndarray, arch: Architecture='unet',
 def batch_segment(batch:Union[torch.Tensor, np.ndarray], arch: Architecture='unet', encoder: EncoderModel='timm-resnest50d', 
                   weights:TrainedOn='All', 
                   already_normalized = False,
+                  mean = None, std=None,
+                  return_features = False,
+                  features_layer = 3,
                   device: torch.device="cuda"):
     """Segment batch of fundus images into 5 classes: background, CTW, EX, HE, MA
 
@@ -68,6 +99,10 @@ def batch_segment(batch:Union[torch.Tensor, np.ndarray], arch: Architecture='une
         encoder (EncoderModel, optional): Defaults to 'timm-resnest50d'.
         weights (TrainedOn, optional):  Defaults to 'All'.
         already_normalized (bool, optional): Defaults to False.
+        mean (list, optional): Defaults to constants.DEFAULT_NORMALIZATION_MEAN.
+        std (list, optional): Defaults to constants.DEFAULT_NORMALIZATION_STD.
+        return_features (bool, optional): Defaults to False. If True, returns also the features map of the i-th encoder layer. See features_layer.
+        features_layer (int, optional): Defaults to 3. If return_features is True, returns the features map of the i-th encoder layer.
         device (torch.device, optional):  Defaults to "cuda".
 
     Returns:
@@ -87,14 +122,23 @@ def batch_segment(batch:Union[torch.Tensor, np.ndarray], arch: Architecture='une
     if batch.shape[1] != 3:
         batch = batch.permute((0,3,1,2))
         
-    
+    if mean is None:
+        mean = DEFAULT_NORMALIZATION_MEAN
+    if std is None:
+        std = DEFAULT_NORMALIZATION_STD
+        
     # Check if batch is normalized. If not, normalize it
     if not already_normalized:
         batch = batch/255.
-        batch = Ftv.normalize(batch, mean = [0.485, 0.456, 0.406], std=(0.229, 0.224, 0.225))
+        batch = Ftv.normalize(batch, mean = mean, std=std)
     
     with torch.inference_mode():
         pred = F.softmax(model(batch), 1)
+    
+    if return_features:
+        features = model.encoder(batch)
+        pred = model.segmentation_head(model.decoder(features))
+        return F.softmax(pred, 1), features[features_layer]
     
     return pred
 
