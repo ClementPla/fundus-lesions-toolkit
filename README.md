@@ -16,7 +16,7 @@ As of now, four lesions are segmented:
 ## Installation
 
 ```bash
-pip install fundus_lesions_toolkit
+pip install .
 ```
 
 
