@@ -3,6 +3,7 @@ import warnings
 from typing import Literal, Union
 
 import numpy as np
+import segmentation_models_pytorch as smp
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -211,8 +212,6 @@ def segmentation_model(arch: Architecture, encoder: EncoderModel, weights: Train
     assert (
         model_key in DOWNLOADABLE_MODELS.keys()
     ), f"Wrong combinations of architecture, encoder and weights asked {(arch, encoder, weights)}. Call list_models() to see all configurations acceptable"
-
-    import segmentation_models_pytorch as smp
 
     model = smp.create_model(
         arch=arch, encoder_name=encoder, encoder_weights=None, in_channels=3, classes=5
