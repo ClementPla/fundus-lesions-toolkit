@@ -84,7 +84,9 @@ def get_segmentation_mask_on_image(image:Union[np.ndarray, torch.Tensor],
     draw = draw_segmentation_masks(draw, border.to(torch.bool).cpu(), alpha=border_alpha, colors=colors)
     return draw
 
-def plot_image_and_mask(image, mask, alpha=0.5, border_alpha=0.8, colors=None, title=None, figsize=(10,10), labels=None,
+def plot_image_and_mask(image, mask, alpha=0.5, border_alpha=0.8, colors=None, title=None, figsize=(10,10), 
+                        labels=None,
+                        save_as=None,
                         kernel_size=3):
     """Plot image and mask"""
     plt.imshow(get_segmentation_mask_on_image(image, mask, alpha, 
@@ -100,5 +102,7 @@ def plot_image_and_mask(image, mask, alpha=0.5, border_alpha=0.8, colors=None, t
         from matplotlib.patches import Patch
         legend_elements = [Patch(facecolor=c, label=l) for l,c in zip(labels[1:], colors[1:])]
         plt.gca().legend(handles=legend_elements, loc='upper right')
-        
+
+    if save_as:
+        plt.savefig(save_as)
     plt.show()
