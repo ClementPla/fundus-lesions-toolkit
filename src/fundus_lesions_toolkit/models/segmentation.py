@@ -1,6 +1,7 @@
 import os
 import warnings
 from typing import Literal, Union
+from functools import lru_cache
 
 import numpy as np
 import segmentation_models_pytorch as smp
@@ -26,8 +27,6 @@ Architecture = Literal["unet"]
 EncoderModel = Literal["resnet34"]
 TrainedOn = Literal["ALL"]
 
-
-_last_model = (None, None)
 
 
 def segment(
@@ -169,7 +168,7 @@ def batch_segment(
 
     return pred
 
-
+@lru_cache(maxsize=2)
 def get_model(
     arch: Architecture = "unet",
     encoder: EncoderModel = "timm-resnest50d",
@@ -189,18 +188,14 @@ def get_model(
         nn.Module: Torch segmentation model
     """
 
-    global _last_model
-    if _last_model[0] == (arch, encoder, weights):
-        model = _last_model[1]
-    else:
-        model = segmentation_model(arch=arch, encoder=encoder, weights=weights).to(
-            device=device
-        )
-        if compile:
-            model.eval()
-            with torch.inference_mode():
-                model = torch.compile(model)
-        _last_model = ((arch, encoder, weights), model)
+    
+    model = segmentation_model(arch=arch, encoder=encoder, weights=weights).to(
+        device=device
+    )
+    if compile:
+        model.eval()
+        with torch.inference_mode():
+            model = torch.compile(model)
     return model
 
 
