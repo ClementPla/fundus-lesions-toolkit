@@ -48,29 +48,49 @@ def get_mosaic(batch_img: torch.Tensor,
 
 
 def get_segmentation_mask_on_image(image:Union[np.ndarray, torch.Tensor],
-                                    mask:torch.Tensor, alpha=0.5, colors=None):
+                                    mask:torch.Tensor, 
+                                    alpha=0.5, 
+                                    border_alpha=0.5,
+                                    colors=None, kernel_size=3):
     from torchvision.utils import draw_segmentation_masks
-    
+    from kornia.morphology import gradient
+
     if isinstance(image, np.ndarray):
         image = torch.from_numpy(image)
+    
     if image.shape[0] != 3:
         image = image.permute((2,0,1))
     
     image = (image - image.min())/(image.max()-image.min())
     image = (255*image).to(torch.uint8)
+    if mask.ndim == 3 and mask.shape[0] == 5:
+        mask = mask.unsqueeze(0)
+        
     if mask.ndim == 4:
-        mask = mask.squeeze(0)
-    if mask.shape[0]>1:
-        mask = torch.argmax(mask, 0, keepdim=False)
+        mask = torch.argmax(mask, 1)
     
-    mask = F.one_hot(mask, num_classes=5).permute((2,0,1))
+    mask = F.one_hot(mask, num_classes=5).squeeze(0).permute((2,0,1))
+    kernel = torch.ones(kernel_size, kernel_size, device='cpu')
+    border = gradient(mask.unsqueeze(0), kernel).squeeze(0)
+    border[0] = 0
     mask[0] = 0   # Remove background
+    draw = draw_segmentation_masks(
+            image.to(torch.uint8).cpu(),
+            mask.to(torch.bool).cpu(),
+            alpha=alpha,
+            colors=colors,
+        )
     
-    return draw_segmentation_masks(image.cpu(), mask.bool().cpu(), alpha=alpha, colors=colors)
+    draw = draw_segmentation_masks(draw, border.to(torch.bool).cpu(), alpha=border_alpha, colors=colors)
+    return draw
 
-def plot_image_and_mask(image, mask, alpha=0.5, colors=None, title=None, figsize=(10,10), labels=None):
+def plot_image_and_mask(image, mask, alpha=0.5, border_alpha=0.8, colors=None, title=None, figsize=(10,10), labels=None,
+                        kernel_size=3):
     """Plot image and mask"""
-    plt.imshow(get_segmentation_mask_on_image(image, mask, alpha, colors).permute((1,2,0)))
+    plt.imshow(get_segmentation_mask_on_image(image, mask, alpha, 
+                                              border_alpha=border_alpha, 
+                                              kernel_size=kernel_size,
+                                              colors=colors).permute((1,2,0)))
     plt.axis('off')
     if title:
         plt.title(title)
