@@ -71,7 +71,7 @@ def get_segmentation_mask_on_image(image:Union[np.ndarray, torch.Tensor],
         mask = torch.argmax(mask, 1)
     
     mask = F.one_hot(mask, num_classes=5).squeeze(0).permute((2,0,1))
-    kernel = torch.ones(kernel_size, kernel_size, device='cpu')
+    kernel = mask.new_ones((kernel_size,kernel_size))
     border = gradient(mask.unsqueeze(0), kernel).squeeze(0)
     border[0] = 0
     mask[0] = 0   # Remove background
