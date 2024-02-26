@@ -57,6 +57,7 @@ def get_segmentation_mask_on_image(image:Union[np.ndarray, torch.Tensor],
 
     if isinstance(image, np.ndarray):
         image = torch.from_numpy(image)
+        image = image.to(mask.device)
     
     if image.shape[0] != 3:
         image = image.permute((2,0,1))
@@ -89,10 +90,11 @@ def plot_image_and_mask(image, mask, alpha=0.5, border_alpha=0.8, colors=None, t
                         save_as=None,
                         kernel_size=3):
     """Plot image and mask"""
+
     plt.imshow(get_segmentation_mask_on_image(image, mask, alpha, 
                                               border_alpha=border_alpha, 
                                               kernel_size=kernel_size,
-                                              colors=colors).permute((1,2,0)))
+                                              colors=colors).permute((1,2,0)).cpu())
     plt.axis('off')
     if title:
         plt.title(title)
