@@ -4,7 +4,7 @@ from typing import Literal, Union
 from functools import lru_cache
 
 import numpy as np
-import segmentation_models_pytorch as smp
+import torchseg
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -28,11 +28,10 @@ EncoderModel = Literal["resnet34"]
 TrainedOn = Literal["ALL"]
 
 
-
 def segment(
     image: np.ndarray,
     arch: Architecture = "unet",
-    encoder: EncoderModel = "timm-resnest50d",
+    encoder: EncoderModel = "resnest50d",
     weights: TrainedOn = "All",
     image_resolution=1536,
     autofit_resolution=True,
@@ -87,7 +86,9 @@ def segment(
         pred = model.segmentation_head(pre_segmentation_features)
         pred = F.softmax(pred, 1)
         if return_features or return_decoder_features:
-            assert not reverse_autofit, "reverse_autofit is not compatible with return_features or return_decoder_features"
+            assert (
+                not reverse_autofit
+            ), "reverse_autofit is not compatible with return_features or return_decoder_features"
             out = [pred]
             if return_features:
                 out.append(features[features_layer])
@@ -168,6 +169,7 @@ def batch_segment(
 
     return pred
 
+
 @lru_cache(maxsize=2)
 def get_model(
     arch: Architecture = "unet",
@@ -188,7 +190,6 @@ def get_model(
         nn.Module: Torch segmentation model
     """
 
-    
     model = segmentation_model(arch=arch, encoder=encoder, weights=weights).to(
         device=device
     )
@@ -208,7 +209,7 @@ def segmentation_model(arch: Architecture, encoder: EncoderModel, weights: Train
         model_key in DOWNLOADABLE_MODELS.keys()
     ), f"Wrong combinations of architecture, encoder and weights asked {(arch, encoder, weights)}. Call list_models() to see all configurations acceptable"
 
-    model = smp.create_model(
+    model = torchseg.create_model(
         arch=arch, encoder_name=encoder, encoder_weights=None, in_channels=3, classes=5
     )
 
@@ -220,6 +221,11 @@ def segmentation_model(arch: Architecture, encoder: EncoderModel, weights: Train
     state_dict = torch.hub.load_state_dict_from_url(
         url, map_location="cpu", file_name=model_name, model_dir=model_dir
     )
+
+    # The models were trained with the segmentatation-models-pytorch library, which uses a different naming convention
+    state_dict = {
+        k.replace("encoder", "encoder.model"): v for k, v in state_dict.items()
+    }
 
     model.load_state_dict(state_dict=state_dict, strict=True)
     if model_key in MODELS_TRAINED_WITH_DROPOUT:
