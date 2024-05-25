@@ -49,7 +49,7 @@ def segment(
     Args:
         image (np.ndarray):   Fundus image of size HxWx3
         arch (Architecture, optional): Defaults to 'unet'.
-        encoder (EncoderModel, optional): Defaults to 'timm-resnest50d'.
+        encoder (EncoderModel, optional): Defaults to 'resnest50d'.
         weights (TrainedOn, optional):  Defaults to 'All'.
         image_resolution (int, optional): Defaults to 1536.
         mean (list, optional): Defaults to constants.DEFAULT_NORMALIZATION_MEAN.
@@ -108,7 +108,7 @@ def segment(
 def batch_segment(
     batch: Union[torch.Tensor, np.ndarray],
     arch: Architecture = "unet",
-    encoder: EncoderModel = "timm-resnest50d",
+    encoder: EncoderModel = "resnest50d",
     weights: TrainedOn = "All",
     already_normalized=False,
     mean=None,
@@ -123,7 +123,7 @@ def batch_segment(
     Args:
         batch (Union[torch.Tensor, np.ndarray]): Batch of fundus images of size BxHxWx3 or Bx3xHxW
         arch (Architecture, optional): Defaults to 'unet'.
-        encoder (EncoderModel, optional): Defaults to 'timm-resnest50d'.
+        encoder (EncoderModel, optional): Defaults to 'resnest50d'.
         weights (TrainedOn, optional):  Defaults to 'All'.
         already_normalized (bool, optional): Defaults to False.
         mean (list, optional): Defaults to constants.DEFAULT_NORMALIZATION_MEAN.
@@ -173,7 +173,7 @@ def batch_segment(
 @lru_cache(maxsize=2)
 def get_model(
     arch: Architecture = "unet",
-    encoder: EncoderModel = "timm-resnest50d",
+    encoder: EncoderModel = "resnest50d",
     weights: TrainedOn = "All",
     device: torch.device = "cuda",
     compile: bool = False,
@@ -182,7 +182,7 @@ def get_model(
 
     Args:
         arch (Architecture, optional): Defaults to 'unet'.
-        encoder (EncoderModel, optional):  Defaults to 'timm-resnest50d'.
+        encoder (EncoderModel, optional):  Defaults to 'resnest50d'.
         weights (TrainedOn, optional):  Defaults to 'All'.
         device (torch.device, optional): Defaults to "cuda".
 
