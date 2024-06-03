@@ -38,7 +38,7 @@ plot_image_and_mask(img, pred, alpha=0.8, title='My segmentation', colors=DEFAUL
 
 ## Models available
 
-Currently, only a single model is made available (`unet` with a `timm-resnest50 encoder`). More will come regularly.
+Currently, only a single model is made available (`unet` with a `resnest50` encoder). More will come regularly.
 
 ## Variants
 

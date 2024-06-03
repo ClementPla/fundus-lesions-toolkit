@@ -5,12 +5,10 @@ build-backend = "hatchling.build"
 [project]
 name = "fundus_lesions_toolkit"
 version = "0.1.1"
-authors = [
-  { name="Clement Playout", email="clement.playout@polymtl.ca" },
-]
+authors = [{ name = "Clement Playout", email = "clement.playout@polymtl.ca" }]
 description = "Tools for lesions segmentation in retinal fundus images"
 readme = "README.md"
-requires-python = ">=3.5"
+requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -19,11 +17,14 @@ classifiers = [
 dependencies = [
     "numpy",
     "opencv-python-headless",
-    "segmentation_models_pytorch",
+    "torchseg",
     "pandas",
     "torch",
     "torchvision",
+    "matplotlib",
+    "kornia",
 ]
+
 [project.urls]
 "Homepage" = "https://github.com/ClementPla/fundus-lesions-toolkit/"
 "Bug Tracker" = "https://github.com/ClementPla/fundus-lesions-toolkit/issues"
