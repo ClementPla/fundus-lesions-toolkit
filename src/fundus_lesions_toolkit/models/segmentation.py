@@ -28,7 +28,7 @@ def segment(
     arch: Architecture = "unet",
     encoder: EncoderModel = "seresnext50_32x4d",
     train_datasets: Union[Dataset, Tuple[Dataset]] = Dataset.ALL,
-    image_resolution=1536,
+    image_resolution=1024,
     autofit_resolution=True,
     reverse_autofit=True,
     mean=None,
@@ -46,7 +46,7 @@ def segment(
         arch (Architecture, optional): Defaults to 'unet'.
         encoder (EncoderModel, optional): Defaults to 'resnest50d'.
         weights (TrainedOn, optional):  Defaults to 'All'.
-        image_resolution (int, optional): Defaults to 1536.
+        image_resolution (int, optional): Defaults to 1024.
         mean (list, optional): Defaults to constants.DEFAULT_NORMALIZATION_MEAN.
         std (list, optional): Defaults to constants.DEFAULT_NORMALIZATION_STD.
         autofit_resolution (bool, optional):  Defaults to True.
