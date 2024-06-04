@@ -1,4 +1,4 @@
-from enum import StrEnum
+from enum import Enum
 LESIONS = ['BG', 'CTW', 'EX', 'HE', 'MA']
 DEFAULT_COLORS = ['black', '#eca63f', '#8cf18e', '#4498f0', '#141488']
 
@@ -27,7 +27,7 @@ DEFAULT_NORMALIZATION_MEAN = (0.485, 0.456, 0.406)
 DEFAULT_NORMALIZATION_STD = (0.229, 0.224, 0.225)
 
 
-class Dataset(StrEnum):
+class Dataset(str, Enum):
     IDRID: str = "IDRID"
     MESSIDOR: str = "MESSIDOR"
     DDR: str = "DDR"
