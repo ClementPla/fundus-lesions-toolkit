@@ -1,6 +1,6 @@
 import os
 import warnings
-from typing import Literal, Union
+from typing import Literal, Union, List
 from functools import lru_cache
 
 import numpy as np
@@ -9,30 +9,27 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms.functional as Ftv
-
+from fundus_lesions_toolkit.models import hf_hub as hf_hub
 from fundus_lesions_toolkit.constants import (
     DEFAULT_NORMALIZATION_MEAN,
     DEFAULT_NORMALIZATION_STD,
+    Dataset
 )
-from fundus_lesions_toolkit.models.checkpoints import (
-    DOWNLOADABLE_MODELS,
-    MODELS_TRAINED_WITH_DROPOUT,
-)
+
 from fundus_lesions_toolkit.utils.images import (
     autofit_fundus_resolution,
     reverse_autofit_tensor,
 )
 
+
 Architecture = Literal["unet"]
 EncoderModel = Literal["resnet34"]
-TrainedOn = Literal["ALL"]
-
 
 def segment(
     image: np.ndarray,
     arch: Architecture = "unet",
-    encoder: EncoderModel = "resnest50d",
-    weights: TrainedOn = "All",
+    encoder: EncoderModel = "seresnext50_32x4d",
+    train_datasets: Union[Dataset, List[Dataset]] = Dataset.ALL,
     image_resolution=1536,
     autofit_resolution=True,
     reverse_autofit=True,
@@ -62,7 +59,7 @@ def segment(
     Returns:
         torch.Tensor: 5 channel tensor with probabilities of each class (size 5xHxW)
     """
-    model = get_model(arch, encoder, weights, device, compile=compile)
+    model = get_model(arch, encoder, train_datasets, device, compile=compile)
     model.eval()
 
     if autofit_resolution:
@@ -108,8 +105,8 @@ def segment(
 def batch_segment(
     batch: Union[torch.Tensor, np.ndarray],
     arch: Architecture = "unet",
-    encoder: EncoderModel = "resnest50d",
-    weights: TrainedOn = "All",
+    encoder: EncoderModel = "seresnext50_32x4d",
+    train_datasets: Union[Dataset, List[Dataset]] = Dataset.ALL,
     already_normalized=False,
     mean=None,
     std=None,
@@ -136,7 +133,7 @@ def batch_segment(
         torch.Tensor: 5 channel tensor with probabilities of each class (size Bx5xHxW)
     """
 
-    model = get_model(arch, encoder, weights, device, compile=compile)
+    model = get_model(arch, encoder, train_datasets, device, compile=compile)
     model.eval()
 
     # Check if batch is torch.Tensor or np.ndarray. If np.ndarray, convert to torch.Tensor
@@ -174,7 +171,7 @@ def batch_segment(
 def get_model(
     arch: Architecture = "unet",
     encoder: EncoderModel = "resnest50d",
-    weights: TrainedOn = "All",
+    train_datasets: Union[Dataset, List[Dataset]] = Dataset.ALL,
     device: torch.device = "cuda",
     compile: bool = False,
 ):
@@ -189,49 +186,13 @@ def get_model(
     Returns:
         nn.Module: Torch segmentation model
     """
-
-    model = segmentation_model(arch=arch, encoder=encoder, weights=weights).to(
-        device=device
-    )
+    model = hf_hub.download_model(arch, encoder, train_datasets).to(device=device)
+    set_dropout(model, initial_value=0.2)
     if compile:
         model.eval()
         with torch.inference_mode():
             model = torch.compile(model)
     return model
-
-
-def segmentation_model(arch: Architecture, encoder: EncoderModel, weights: TrainedOn):
-    arch = arch.lower()
-    weights = weights.lower()
-    encoder = encoder.lower()
-    model_key = (arch, encoder, weights)
-    assert (
-        model_key in DOWNLOADABLE_MODELS.keys()
-    ), f"Wrong combinations of architecture, encoder and weights asked {(arch, encoder, weights)}. Call list_models() to see all configurations acceptable"
-
-    model = torchseg.create_model(
-        arch=arch, encoder_name=encoder, encoder_weights=None, in_channels=3, classes=5
-    )
-
-    url = DOWNLOADABLE_MODELS[model_key]
-    model_name = f"{arch}_{encoder}_{weights}.ckpt"
-    model_dir = os.path.join(
-        torch.hub.get_dir(), "checkpoints/fundus_segmentation_toolkit/segmentation"
-    )
-    state_dict = torch.hub.load_state_dict_from_url(
-        url, map_location="cpu", file_name=model_name, model_dir=model_dir
-    )
-
-    # The models were trained with the segmentatation-models-pytorch library, which uses a different naming convention
-    state_dict = {
-        k.replace("encoder", "encoder.model"): v for k, v in state_dict.items()
-    }
-
-    model.load_state_dict(state_dict=state_dict, strict=True)
-    if model_key in MODELS_TRAINED_WITH_DROPOUT:
-        model = set_dropout(model, initial_value=0.2)
-    return model
-
 
 def set_dropout(model, initial_value=0.0):
     warnings.warn(f"Setting dropout to {initial_value}")
