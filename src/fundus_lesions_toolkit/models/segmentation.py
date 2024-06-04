@@ -1,15 +1,13 @@
-import os
 import warnings
-from typing import Literal, Union, List
+from typing import Literal, Union, List, Tuple
 from functools import lru_cache
 
 import numpy as np
-import torchseg
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms.functional as Ftv
-from fundus_lesions_toolkit.models import hf_hub as hf_hub
+from fundus_lesions_toolkit.models.hf_hub import download_model
 from fundus_lesions_toolkit.constants import (
     DEFAULT_NORMALIZATION_MEAN,
     DEFAULT_NORMALIZATION_STD,
@@ -29,7 +27,7 @@ def segment(
     image: np.ndarray,
     arch: Architecture = "unet",
     encoder: EncoderModel = "seresnext50_32x4d",
-    train_datasets: Union[Dataset, List[Dataset]] = Dataset.ALL,
+    train_datasets: Union[Dataset, Tuple[Dataset]] = Dataset.ALL,
     image_resolution=1536,
     autofit_resolution=True,
     reverse_autofit=True,
@@ -106,7 +104,7 @@ def batch_segment(
     batch: Union[torch.Tensor, np.ndarray],
     arch: Architecture = "unet",
     encoder: EncoderModel = "seresnext50_32x4d",
-    train_datasets: Union[Dataset, List[Dataset]] = Dataset.ALL,
+    train_datasets: Union[Dataset, Tuple[Dataset]] = Dataset.ALL,
     already_normalized=False,
     mean=None,
     std=None,
@@ -171,7 +169,7 @@ def batch_segment(
 def get_model(
     arch: Architecture = "unet",
     encoder: EncoderModel = "resnest50d",
-    train_datasets: Union[Dataset, List[Dataset]] = Dataset.ALL,
+    train_datasets: Union[Dataset, Tuple[Dataset]] = Dataset.ALL,
     device: torch.device = "cuda",
     compile: bool = False,
 ):
@@ -186,7 +184,7 @@ def get_model(
     Returns:
         nn.Module: Torch segmentation model
     """
-    model = hf_hub.download_model(arch, encoder, train_datasets).to(device=device)
+    model = download_model(arch, encoder, train_datasets).to(device=device)
     set_dropout(model, initial_value=0.2)
     if compile:
         model.eval()

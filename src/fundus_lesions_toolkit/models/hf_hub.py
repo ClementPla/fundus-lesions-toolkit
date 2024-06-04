@@ -15,9 +15,11 @@ class HuggingFaceModel(PyTorchModelHubMixin, nn.Module):
         )
 
 def download_model(arch, encoder_name, train_datasets: Union[Dataset, List[Dataset]] = Dataset.ALL):
+    if isinstance(train_datasets, tuple):
+        train_datasets = list(train_datasets)
+        
     if not isinstance(train_datasets, list):
         train_datasets = [train_datasets]
-    
     train_datasets = list(set(train_datasets))
     train_datasets.sort()
     

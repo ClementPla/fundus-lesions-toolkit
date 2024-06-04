@@ -82,7 +82,7 @@ def get_segmentation_mask_on_image(image:Union[np.ndarray, torch.Tensor],
             colors=colors,
         )
     
-    draw = draw_segmentation_masks(draw, border.to(torch.bool).cpu(), alpha=border_alpha, colors=colors)
+    draw = draw_segmentation_masks(draw, border.to(torch.bool).cpu(), alpha=1-border_alpha, colors='white')
     return draw
 
 def plot_image_and_mask(image, mask, alpha=0.5, border_alpha=0.8, colors=None, title=None, figsize=(10,10), 
