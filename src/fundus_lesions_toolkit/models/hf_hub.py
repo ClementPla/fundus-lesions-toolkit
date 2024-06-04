@@ -5,6 +5,7 @@ from huggingface_hub import list_repo_refs
 import torch.nn as nn
 from typing import List, Union
 from fundus_lesions_toolkit.constants import Dataset
+
 ROOT_HF = "ClementP/fundus-lesions-segmentation-"
 
 class HuggingFaceModel(PyTorchModelHubMixin, nn.Module):
@@ -31,7 +32,7 @@ def download_model(arch, encoder_name, train_datasets: Union[Dataset, List[Datas
     return model
 
 def list_models():
-    collection = get_collection('ClementP/fundus-lesions-segmentation-665f02dcdddc3d53c6e00274')
+    collection = get_collection(ROOT_HF+'665f02dcdddc3d53c6e00274')
     print("Architecture | \033[94m Encoder | \033[92m Variants")
     for item in collection.items:
         if item.item_type == 'model':
