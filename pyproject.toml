@@ -22,7 +22,7 @@ dependencies = [
     "torch",
     "torchvision",
     "matplotlib",
-    "huggingface",
+    "huggingface_hub",
     "kornia",
 ]
 
