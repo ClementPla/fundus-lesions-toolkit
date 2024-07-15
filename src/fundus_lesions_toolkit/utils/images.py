@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import torch.nn.functional as F
+import math
+from icecream import ic
 
 
 def autofit_fundus_resolution(fundus, max_size, return_roi=False):
@@ -12,29 +14,51 @@ def autofit_fundus_resolution(fundus, max_size, return_roi=False):
         max_size (int): _description_
         return_roi (bool)
     """
-
     image, roi, margins = autocrop_fundus(fundus)
     h, w = image.shape[:-1]
     f = max_size / max((h, w))
-    image = cv2.resize(image, fx=f, fy=f, dsize=None)
+    image = cv2.resize(image, fx=f, fy=f, dsize=None, interpolation=cv2.INTER_CUBIC)
     h, w = image.shape[:-1]
     padh = (max_size - h) // 2, (max_size - h) // 2 + ((max_size - h) % 2)
     padw = (max_size - w) // 2, (max_size - w) // 2 + ((max_size - w) % 2)
 
     reverse_params = {
         "pad": margins,
-        "resize": 1 / f,
+        "resize": 1.0 / f,
         "crop": (padh[0], padh[0] + h, padw[0], padw[0] + w),
     }
+    padded_image = np.pad(image, (padh, padw, (0, 0)))
     if return_roi:
         roi = cv2.resize(roi, fx=f, fy=f, dsize=None)
+        padded_roi = np.pad(roi, (padh, padw))
         return (
-            np.pad(image, (padh, padw, (0, 0))),
-            np.pad(roi, (padh, padw)),
+            padded_image,
+            padded_roi,
             reverse_params,
         )
 
-    return np.pad(image, (padh, padw, (0, 0))), reverse_params
+    return padded_image, reverse_params
+
+
+def autofit_mask_from_params(mask, reverse_params):
+    margins_cropped = reverse_params["pad"]
+    h, w = mask.shape[:-1]
+    mask = mask[
+        margins_cropped[0] : h - margins_cropped[1],
+        margins_cropped[2] : w - margins_cropped[3],
+    ]
+    f = 1 / reverse_params["resize"]
+    mask = cv2.resize(mask, fx=f, fy=f, dsize=None)
+    max_size = max(mask.shape)
+    h, w = mask.shape[:-1]
+    padh = (max_size - h) // 2, (max_size - h) // 2 + ((max_size - h) % 2)
+    padw = (max_size - w) // 2, (max_size - w) // 2 + ((max_size - w) % 2)
+
+    if mask.ndim == 2:
+        mask = np.pad(mask, (padh, padw))
+    else:
+        mask = np.pad(mask, (padh, padw, (0, 0)))
+    return mask
 
 
 def reverse_autofit(image, **forward_params):
@@ -68,10 +92,17 @@ def reverse_autofit_tensor(tensor, **forward_params):
         torch.Tensor: CxH_newxW_new
     """
     crop = forward_params["crop"]
+
     tensor = tensor[:, crop[0] : crop[1], crop[2] : crop[3]]
     f = forward_params["resize"]
-    tensor = F.interpolate(tensor.unsqueeze(0), scale_factor=f).squeeze(0)
-
+    h, w = tensor.shape[-2:]
+    new_h, new_w = round(h * f), round(w * f)
+    tensor = F.interpolate(
+        tensor.unsqueeze(0),
+        size=(new_h, new_w),
+        mode="bilinear",
+        recompute_scale_factor=False,
+    ).squeeze(0)
     pad = forward_params["pad"]
     tensor = F.pad(tensor, pad=pad[::-1])
     return tensor
@@ -95,7 +126,6 @@ def autocrop_fundus(fundus):
     not_null_pixels = cv2.findNonZero(roi)
     x_range = (np.min(not_null_pixels[:, :, 0]), np.max(not_null_pixels[:, :, 0]))
     y_range = (np.min(not_null_pixels[:, :, 1]), np.max(not_null_pixels[:, :, 1]))
-
     fundus_croppped = fundus[y_range[0] : y_range[1], x_range[0] : x_range[1]]
     roi_cropped = roi[y_range[0] : y_range[1], x_range[0] : x_range[1]]
     margins_removed = (y_range[0], h - y_range[1], x_range[0], w - x_range[1])

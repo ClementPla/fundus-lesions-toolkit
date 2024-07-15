@@ -11,7 +11,7 @@ from fundus_lesions_toolkit.models.hf_hub import download_model
 from fundus_lesions_toolkit.constants import (
     DEFAULT_NORMALIZATION_MEAN,
     DEFAULT_NORMALIZATION_STD,
-    Dataset
+    Dataset,
 )
 
 from fundus_lesions_toolkit.utils.images import (
@@ -22,6 +22,7 @@ from fundus_lesions_toolkit.utils.images import (
 
 Architecture = Literal["unet"]
 EncoderModel = Literal["resnet34"]
+
 
 def segment(
     image: np.ndarray,
@@ -59,7 +60,7 @@ def segment(
     """
     model = get_model(arch, encoder, train_datasets, device, compile=compile)
     model.eval()
-
+    h, w, c = image.shape
     if autofit_resolution:
         image, roi, transforms = autofit_fundus_resolution(
             image, image_resolution, return_roi=True
@@ -81,9 +82,7 @@ def segment(
         pred = model.segmentation_head(pre_segmentation_features)
         pred = F.softmax(pred, 1)
         if return_features or return_decoder_features:
-            assert (
-                not reverse_autofit
-            ), "reverse_autofit is not compatible with return_features or return_decoder_features"
+            assert not reverse_autofit, "reverse_autofit is not compatible with return_features or return_decoder_features"
             out = [pred]
             if return_features:
                 out.append(features[features_layer])
@@ -96,7 +95,6 @@ def segment(
         pred = reverse_autofit_tensor(pred, **transforms)
         all_zeros = ~torch.any(pred, dim=0)  # Find all zeros probabilities
         pred[0, all_zeros] = 1  # Assign them to background
-
     return pred
 
 
@@ -191,6 +189,7 @@ def get_model(
         with torch.inference_mode():
             model = torch.compile(model)
     return model
+
 
 def set_dropout(model, initial_value=0.0):
     warnings.warn(f"Setting dropout to {initial_value}")
