@@ -8,16 +8,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms.functional as Ftv
 from fundus_lesions_toolkit.models.hf_hub import download_model
-from fundus_lesions_toolkit.constants import (
-    DEFAULT_NORMALIZATION_MEAN,
-    DEFAULT_NORMALIZATION_STD,
-    Dataset,
-)
-
-from fundus_lesions_toolkit.utils.images import (
+from fundus_lesions_toolkit.constants import Dataset
+from fundus_data_toolkit.functional import (
     autofit_fundus_resolution,
     reverse_autofit_tensor,
 )
+from fundus_data_toolkit.config import get_normalization
 
 
 Architecture = Literal["unet"]
@@ -70,12 +66,11 @@ def segment(
     tensor = torch.from_numpy(image).permute((2, 0, 1)).unsqueeze(0).to(device)
 
     if mean is None:
-        mean = DEFAULT_NORMALIZATION_MEAN
+        mean = get_normalization()[0]
     if std is None:
-        std = DEFAULT_NORMALIZATION_STD
-    tensor = Ftv.normalize(
-        tensor, mean=DEFAULT_NORMALIZATION_MEAN, std=DEFAULT_NORMALIZATION_STD
-    )
+        std = get_normalization()[1]
+    tensor = Ftv.normalize(tensor, mean=mean, std=std)
+
     with torch.inference_mode():
         features = model.encoder(tensor)
         pre_segmentation_features = model.decoder(*features)
@@ -143,9 +138,9 @@ def batch_segment(
         batch = batch.permute((0, 3, 1, 2))
 
     if mean is None:
-        mean = DEFAULT_NORMALIZATION_MEAN
+        mean = get_normalization()[0]
     if std is None:
-        std = DEFAULT_NORMALIZATION_STD
+        std = get_normalization()[1]
 
     # Check if batch is normalized. If not, normalize it
     if not already_normalized:

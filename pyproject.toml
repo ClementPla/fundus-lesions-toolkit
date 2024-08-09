@@ -24,6 +24,8 @@ dependencies = [
     "matplotlib",
     "huggingface_hub",
     "kornia",
+    "icecream",
+    "fundus-data-toolkit @ git+https://github.com/ClementPla/fundus-data-toolkit",
 ]
 
 [project.urls]
