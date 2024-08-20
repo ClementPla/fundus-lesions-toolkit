@@ -31,3 +31,6 @@ dependencies = [
 [project.urls]
 "Homepage" = "https://github.com/ClementPla/fundus-lesions-toolkit/"
 "Bug Tracker" = "https://github.com/ClementPla/fundus-lesions-toolkit/issues"
+
+[tool.hatch.metadata]
+allow-direct-references = true
